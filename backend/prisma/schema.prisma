@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  googleId  String    @unique
+  email     String    @unique
+  name      String?
+  picture   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  title         String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  chatHistory   Message[]
+  codeContent   String?
+  uiEditorState Json?           
+  framework     String?        @default("reactjs")
+  tags          String[]       @default([])
+  modelUsed     String?        @default("gemini-2.5-flash")
+  CodeSnapshot  CodeSnapshot[]
+}
+
+enum Role {
+  user
+  assistant
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      Role
+  content   String
+  imageData String?  @default("")
+  timestamp DateTime @default(now())
+}
+
+model CodeSnapshot {
+  id        String   @id @default(cuid())
+  session   Session  @relation(fields: [sessionId], references: [id])
+  sessionId String
+  code      String
+  createdAt DateTime @default(now())
+}
