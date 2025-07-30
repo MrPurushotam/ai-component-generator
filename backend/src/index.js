@@ -1,11 +1,14 @@
 const express = require("express");
 const cors = require("cors");
+const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = process.env.PORT || 5000;
 require("dotenv").config();
 
-app.use(express.json());
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+
 app.use(cookieParser());
 app.use(cors({
     origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",") : "http://localhost:3000",

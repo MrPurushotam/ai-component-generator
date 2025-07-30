@@ -45,12 +45,12 @@ class GeminiService {
      * @param {string} options.prompt - The user's prompt.
      * @param {string | null} [options.imageData=null] - Base64 encoded image data.
      * @param {string} [options.imageMimeType="image/jpeg"] - MIME type of the image data.
-     * @param {string} [options.model="gemini-1.5-flash"] - The Gemini model to use. Changed to 1.5-flash as 2.5 is not public.
+     * @param {string} [options.model="gemini-2.5-flash"] - The Gemini model to use. Changed to 1.5-flash as 2.5 is not public.
      * @param {number} [options.temperature=0.4] - Controls randomness of the response.
      * @returns {Promise<string>} The AI-generated response text.
      * @throws {Error} If content generation fails.
      */
-    async generateContent({ userId, chatId, prompt, imageData = null, model = "gemini-2.5-flash", temperature = 0.4 }) {
+    async generateContent({ userId, chatId, prompt, imageData = null, imageMimeType = "image/jpeg", model = "gemini-2.5-flash", temperature = 0.4 }) {
         const history = this.getConversationHistory(userId, chatId);
 
         let parts = [{ text: prompt }];
@@ -58,7 +58,7 @@ class GeminiService {
             parts.push({
                 inlineData: {
                     data: imageData,
-                    mimeType: "image/jpeg",
+                    mimeType: imageMimeType,
                 },
             });
         }

@@ -55,6 +55,16 @@ router.post("/:chatId", async (req, res) => {
         if (!session || session.userId !== userId) {
             return res.status(404).json({ message: "Session not found or unauthorized", success: false });
         }
+
+        let geminiImageData = null;
+        let geminiImageMimeType = "image/jpeg";
+        if (imageData && typeof imageData === "string") {
+            const match = imageData.match(/^data:(image\/\w+);base64,(.+)$/);
+            if (match) {
+                geminiImageMimeType = match[1];
+                geminiImageData = match[2];
+            }
+        }
         const userMessage = await prisma.message.create({
             data: {
                 sessionId: chatId,
@@ -76,7 +86,8 @@ router.post("/:chatId", async (req, res) => {
                 userId,
                 chatId,
                 prompt,
-                imageData
+                imageData: geminiImageData,
+                imageMimeType: geminiImageMimeType
             });
         } catch (error) {
             console.error("Gemini generation error:", error);
