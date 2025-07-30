@@ -9,13 +9,14 @@ const Navbar = () => {
     const { isLoggedIn, isLoading, user } = useSelector(state => state.auth);
     const dispatch = useDispatch();
     const router = useRouter();
-    const isAuth = localStorage.getItem("authorized")
+    const [isAuth, setIsAuth] = React.useState(false);
 
     useEffect(() => {
+        setIsAuth(localStorage.getItem("authorized") || false);
         if (isAuth && !isLoading) {
             dispatch(fetchUserThunk());
         }
-    }, [dispatch, isLoggedIn]);
+    }, [dispatch, isAuth, isLoading]);
 
     const handleLogout = async () => {
         try {

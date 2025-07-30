@@ -50,9 +50,9 @@ const LoginPage = () => {
   const handleCredentialResponse = async (response) => {
     try {
       let result = await dispatch(loginUser(response.credential));
-      if(loginUser.fulfilled.match(result)){
+      if (loginUser.fulfilled.match(result)) {
         if (typeof window !== "undefined") {
-          localStorage.setItem("authorized",true);
+          window.localStorage.setItem("authorized", true);
         }
         router.push("/chat")
       }
@@ -83,7 +83,7 @@ const LoginPage = () => {
       scriptLoaded.current = false;
       await dispatch(logoutUser());
       if (typeof window !== "undefined") {
-        localStorage.removeItem("authorized");
+        window.localStorage.removeItem("authorized");
         window.location.href = '/login';
       }
     } catch (error) {
