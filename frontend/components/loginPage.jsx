@@ -51,7 +51,9 @@ const LoginPage = () => {
     try {
       let result = await dispatch(loginUser(response.credential));
       if(loginUser.fulfilled.match(result)){
-        localStorage.setItem("authorized",true);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("authorized",true);
+        }
         router.push("/chat")
       }
     } catch (err) {
@@ -80,8 +82,10 @@ const LoginPage = () => {
       googleInitialized.current = false;
       scriptLoaded.current = false;
       await dispatch(logoutUser());
-      localStorage.removeItem("authorized");
-      window.location.href = '/login';
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("authorized");
+        window.location.href = '/login';
+      }
     } catch (error) {
       console.error('Logout error:', error);
       router.push('/login');
