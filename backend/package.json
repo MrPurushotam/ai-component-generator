@@ -4,8 +4,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index",
-    "build": "prisma generate"
+    "dev": "nodemon src/index.js"
   },
   "author": "purushotam",
   "license": "ISC",
