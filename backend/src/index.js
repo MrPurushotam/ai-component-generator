@@ -23,7 +23,10 @@ app.get("/", (req, res) => {
 
 app.use("/auth", require("./routes/auth"))
 app.use("/chat", require("./routes/chats"))
-
-app.listen(PORT, () => {
-    console.log("App running on " + PORT)
-})
+if (process.env.NODE_ENV !== "production") {
+    app.listen(PORT, () => {
+        console.log("App running on " + PORT)
+    })
+} else {
+    module.exports = app;
+}
