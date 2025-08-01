@@ -22,7 +22,6 @@ router.post("/google", signInLimiter, async (req, res) => {
 
         const payload = ticket.getPayload();
         const { sub: googleId, email, name, picture } = payload;
-        console.log(payload);
         let user = await prisma.user.findUnique({
             where: { googleId }
         });
@@ -75,6 +74,7 @@ router.post("/google", signInLimiter, async (req, res) => {
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
             maxAge: 24 * 60 * 60 * 1000,
+            domain: process.env.NODE_ENV === 'production' ? "purushotamjeswani.in" : "*",
             path: '/'
         });
         UserDetailsMap.set(customToken, userDetails)
@@ -95,6 +95,8 @@ router.post("/logout", (req, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
+        domain: process.env.NODE_ENV === 'production' ? "purushotamjeswani.in" : "*",
         path: '/'
     });
     UserDetailsMap.delete(req.token)
