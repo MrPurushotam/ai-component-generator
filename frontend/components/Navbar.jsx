@@ -12,11 +12,15 @@ const Navbar = () => {
     const [isAuth, setIsAuth] = React.useState(false);
 
     useEffect(() => {
-        setIsAuth(localStorage.getItem("authorized") || false);
+        setIsAuth(localStorage.getItem("authorized") === "true");
+    }, []);
+
+
+    useEffect(() => {
         if (isAuth && !isLoading) {
             dispatch(fetchUserThunk());
         }
-    }, [dispatch, isAuth, isLoading]);
+    }, [dispatch, isAuth, isLoggedIn]);
 
     const handleLogout = async () => {
         try {

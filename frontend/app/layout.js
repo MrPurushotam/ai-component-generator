@@ -23,7 +23,6 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="apple-mobile-web-app-title" content="AI:Component-Gen" />
         <meta name="google-site-verification" content="Hyq7_rXCrzF3ib_AhDf781L1pYQmFT7oZilFhKZVWCY" />
-        
         <meta name="description" content="Ai powered react component generator which help you generate and render react component on the flight." />
         <meta name="keywords" content="AI, React, Component Generator, Code, Web Development, Automation" />
         <meta name="author" content="Ai-Component-Gen" />
