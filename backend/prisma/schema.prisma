@@ -16,7 +16,7 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   sessions     Session[]
-  tokenLimit  Int       @default(250)
+  tokenLimit  Int       @default(10000)
   customApiKey String    @default("")
 
   @@map("users")
