@@ -8,14 +8,16 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  googleId  String    @unique
-  email     String    @unique
-  name      String?
-  picture   String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  sessions  Session[]
+  id           String    @id @default(cuid())
+  googleId     String    @unique
+  email        String    @unique
+  name         String?
+  picture      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+  tokenLimit  Int       @default(250)
+  customApiKey String    @default("")
 
   @@map("users")
 }
@@ -29,7 +31,7 @@ model Session {
   updatedAt     DateTime       @updatedAt
   chatHistory   Message[]
   codeContent   String?
-  uiEditorState Json?           
+  uiEditorState Json?
   framework     String?        @default("reactjs")
   tags          String[]       @default([])
   modelUsed     String?        @default("gemini-2.5-flash")

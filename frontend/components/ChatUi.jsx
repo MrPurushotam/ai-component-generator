@@ -165,7 +165,7 @@ const ChatUi = ({ chatIdFromUrl }) => {
         <div className="flex flex-col md:flex-row h-screen overflow-hidden">
             <div className="w-full md:w-80 lg:w-96 bg-gray-800 text-white flex flex-col h-auto md:h-screen shrink-0 order-2 md:order-1">
                 <div className="p-4 border-b border-gray-700">
-                    <h2 className="text-xl font-bold italic tracking-wide text-green-100">Ai-Comopnet-Gen</h2>
+                    <h2 className="text-xl font-bold italic tracking-wide text-green-100">Ai-Componet-Gen</h2>
                 </div>
                 <div className="flex-1 overflow-y-auto my-2 relative">
                     {isLoadingChats && (

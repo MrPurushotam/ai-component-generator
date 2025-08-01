@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "users" ADD COLUMN     "customApiKey" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "tokenLimit" INTEGER NOT NULL DEFAULT 250;

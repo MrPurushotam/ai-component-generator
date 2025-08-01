@@ -2,11 +2,14 @@ const authMiddleware = require("../middleware/auth.middleware");
 const router = require("express").Router();
 const prisma = require("../utils/prismaClient");
 const geminiService = require("../utils/gemini");
+const checkTokens = require("../middleware/tokenUsed.middleware");
+const UserDetailsMap = require("../utils/InMemoryMap");
+const { aiLimiter, chatCreationLimiter } = require("../utils/rateLimiting");
 
 router.use(authMiddleware);
 
 // handles new chat creation
-router.post("/create", async (req, res) => {
+router.post("/create", chatCreationLimiter, async (req, res) => {
     const { title } = req.body;
     const userId = req.user?.userId;
     if (!userId) {
@@ -38,7 +41,7 @@ router.post("/create", async (req, res) => {
     }
 })
 // handle ai output generation 
-router.post("/:chatId", async (req, res) => {
+router.post("/:chatId", aiLimiter, checkTokens, async (req, res) => {
     try {
         const { prompt, imageData } = req.body;
         const chatId = req.params.chatId;
@@ -81,6 +84,7 @@ router.post("/:chatId", async (req, res) => {
             }
         });
         let response;
+        let usageMetadata;
         try {
             response = await geminiService.generateContent({
                 userId,
@@ -89,16 +93,31 @@ router.post("/:chatId", async (req, res) => {
                 imageData: geminiImageData,
                 imageMimeType: geminiImageMimeType
             });
+            usageMetadata = response.usageMetadata
         } catch (error) {
             console.error("Gemini generation error:", error);
             return res.status(500).json({ message: "Failed to generate AI response.", success: false });
         }
         console.log(response);
+        const tokensUsed = usageMetadata?.totalTokenCount || 0;
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                tokenLimit: {
+                    decrement: tokensUsed
+                }
+            }
+        });
+        const cachedUser = UserDetailsMap.get(req.token);
+        if (cachedUser) {
+            cachedUser.tokenLimit = Math.max(0, cachedUser.tokenLimit - tokensUsed);
+            UserDetailsMap.set(req.token, cachedUser);
+        }
         const assistantMessage = await prisma.message.create({
             data: {
                 sessionId: chatId,
                 role: "assistant",
-                content: response,
+                content: response.aiResponse,
                 imageData: ""
             }, select: {
                 id: true,
@@ -113,10 +132,11 @@ router.post("/:chatId", async (req, res) => {
             message: "AI response generated successfully",
             success: true,
             userMessage,
-            aiResponse: assistantMessage
+            aiResponse: assistantMessage,
+            tokensUsed
         });
     } catch (error) {
-        console.log("Error creating chat ", error);
+        console.log("Error generating response ", error);
         res.status(500).json({ message: "Error occured while prompting", success: false })
     }
 })

@@ -50,7 +50,7 @@ class GeminiService {
      * @returns {Promise<string>} The AI-generated response text.
      * @throws {Error} If content generation fails.
      */
-    async generateContent({ userId, chatId, prompt, imageData = null, imageMimeType = "image/jpeg", model = "gemini-2.5-flash", temperature = 0.4 }) {
+    async generateContent({ userId, chatId, prompt, imageData = null, imageMimeType = "image/jpeg", model = "gemini-2.5-flash-lite", temperature = 0.4 }) {
         const history = this.getConversationHistory(userId, chatId);
 
         let parts = [{ text: prompt }];
@@ -76,7 +76,7 @@ class GeminiService {
         console.log(result);
         const aiResponse = result.response.text();
         this.saveToHistory(userId, chatId, "model", aiResponse);
-        return aiResponse;
+        return { aiResponse, usageMetadata: result.response.usageMetadata };
     }
 }
 

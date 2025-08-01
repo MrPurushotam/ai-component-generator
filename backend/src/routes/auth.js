@@ -3,13 +3,14 @@ const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middleware/auth.middleware');
 const prisma = require("../utils/prismaClient");
+const UserDetailsMap = require("../utils/InMemoryMap");
+const { signInLimiter } = require("../utils/rateLimiting");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-router.post("/google", async (req, res) => {
+router.post("/google", signInLimiter, async (req, res) => {
     try {
         const { idToken } = req.body;
-
         if (!idToken) {
             return res.status(400).json({ message: "ID token is required", success: false });
         }
@@ -32,7 +33,14 @@ router.post("/google", async (req, res) => {
                     googleId,
                     email,
                     name,
-                    picture
+                    picture,
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    picture: true,
+                    tokenLimit: true
                 }
             });
         } else {
@@ -42,20 +50,25 @@ router.post("/google", async (req, res) => {
                     email,
                     name,
                     picture
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    picture: true,
+                    tokenLimit: true
                 }
             });
         }
+        let userDetails = {
+            userId: user.id,
+            email: user.email,
+            username: user.name,
+            picture: user.picture,
+            tokenLimit: user.tokenLimit
+        }
 
-        const customToken = jwt.sign(
-            {
-                userId: user.id,
-                email: user.email,
-                username: user.name,
-                picture: user.picture
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
+        const customToken = jwt.sign(userDetails, process.env.JWT_SECRET, { expiresIn: '24h' });
 
         res.cookie('auth-token', customToken, {
             httpOnly: true,
@@ -64,15 +77,10 @@ router.post("/google", async (req, res) => {
             maxAge: 24 * 60 * 60 * 1000,
             path: '/'
         });
-
+        UserDetailsMap.set(customToken, userDetails)
         res.json({
             token: customToken,
-            user: {
-                userId: user.id,
-                email: user.email,
-                username: user.name,
-                picture: user.picture
-            },
+            user: userDetails,
             success: true
         });
 
@@ -89,11 +97,26 @@ router.post("/logout", (req, res) => {
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         path: '/'
     });
+    UserDetailsMap.delete(req.token)
     res.json({ message: "Logged out successfully", success: true });
 })
 
 router.get("/", authMiddleware, async (req, res) => {
     try {
+        const cachedUser = UserDetailsMap.get(req.token);
+        if (cachedUser) {
+            return res.json({
+                user: {
+                    userId: cachedUser.userId,
+                    email: cachedUser.email,
+                    username: cachedUser.username,
+                    picture: cachedUser.picture,
+                    tokens: cachedUser.tokenLimit
+                },
+                success: true
+            });
+        }
+
         const user = await prisma.user.findUnique({
             where: { id: req.user.userId }
         });
@@ -107,7 +130,8 @@ router.get("/", authMiddleware, async (req, res) => {
                 userId: user.id,
                 email: user.email,
                 username: user.name,
-                picture: user.picture
+                picture: user.picture,
+                tokens: user.tokenLimit
             },
             success: true
         });
@@ -116,6 +140,28 @@ router.get("/", authMiddleware, async (req, res) => {
         console.error('Auth verification error:', error);
         res.status(500).json({ message: "Server error", success: false });
     }
+})
+
+router.get("/key", async (req, res) => {
+    const userId = req.user.userId;
+    if (!userId) {
+        return res.status(401).json({ message: "User Unauthorized", success: false });
+    }
+
+    try {
+        const resp = await prisma.user.findUnique({
+            where: {
+                id: userId
+            }, select: {
+                customApiKey: true
+            }
+        })
+        return res.status(200).json({ message: 'Fetched user custom key.', key: resp.customApiKey })
+    } catch (error) {
+        console.log("Error occured while fetching user key ", error);
+        res.status(500).json({ message: "Internal Server error", success: false });
+    }
+
 })
 
 module.exports = router;
